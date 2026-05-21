@@ -50,8 +50,16 @@ public class LogisticsProcessor {
 
         final LogisticsOrder finalOrder = logisticsOrder;
         final String trackingCode = generateTrackingCode();
+        final String shortId = event.orderId().toString().substring(0, 8).toUpperCase();
 
-        log.info("Processando pedido {} com tracking {}", event.orderId(), trackingCode);
+        log.info("");
+        log.info("+---------------------------------------------------+");
+        log.info("|  KAFKA >> [order.created] consumido               |");
+        log.info("|  Pedido   : #{}                          |", shortId);
+        log.info("|  Tracking : {}                         |", trackingCode);
+        log.info("|  Status   : PROCESSING                            |");
+        log.info("|  Aguardando {}ms para simular envio...        |", shippingDelayMs);
+        log.info("+---------------------------------------------------+");
 
         // Usa Virtual Thread para nao bloquear o consumer do Kafka
         Thread.ofVirtual().name("logistics-" + event.orderId()).start(() -> {
@@ -66,7 +74,15 @@ public class LogisticsProcessor {
                 producer.publishStatusUpdate(new OrderStatusUpdatedEvent(
                     event.orderId(), event.userId(), "SHIPPED", trackingCode, LocalDateTime.now()
                 ));
-                log.info("Pedido {} -> SHIPPED (tracking: {})", event.orderId(), trackingCode);
+
+                log.info("");
+                log.info("+---------------------------------------------------+");
+                log.info("|  KAFKA << [order.status.updated] publicado        |");
+                log.info("|  Pedido   : #{}                          |", shortId);
+                log.info("|  Status   : SHIPPED [em transito]                 |");
+                log.info("|  Tracking : {}                         |", trackingCode);
+                log.info("|  Aguardando {}ms para simular entrega...     |", deliveryDelayMs);
+                log.info("+---------------------------------------------------+");
 
                 // Simula entrega -> DELIVERED
                 Thread.sleep(deliveryDelayMs);
@@ -77,7 +93,14 @@ public class LogisticsProcessor {
                 producer.publishStatusUpdate(new OrderStatusUpdatedEvent(
                     event.orderId(), event.userId(), "DELIVERED", trackingCode, LocalDateTime.now()
                 ));
-                log.info("Pedido {} -> DELIVERED", event.orderId());
+
+                log.info("");
+                log.info("+---------------------------------------------------+");
+                log.info("|  KAFKA << [order.status.updated] publicado        |");
+                log.info("|  Pedido   : #{}                          |", shortId);
+                log.info("|  Status   : DELIVERED [entregue]                  |");
+                log.info("|  Fluxo completo para este pedido.                 |");
+                log.info("+---------------------------------------------------+");
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

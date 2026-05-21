@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level [%-20.20logger{19}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Silencia tudo por padrão -->
+    <root level="OFF">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Apenas o essencial do Spring Boot na inicialização -->
+    <logger name="org.springframework.boot.web.embedded.tomcat" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    <logger name="org.springframework.kafka.listener.KafkaMessageListenerContainer" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- Logs da aplicação -->
+    <logger name="com.projeto.integrador" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+</configuration>
