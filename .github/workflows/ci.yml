@@ -1,0 +1,66 @@
+name: Logistics — Tests & Coverage
+
+on:
+  push:
+    branches: [main, dev, master]
+  pull_request:
+    branches: [main, dev, master]
+
+jobs:
+  test:
+    name: Unit Tests + JaCoCo Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Criar .env para testes
+        run: |
+          cat > .env << 'EOF'
+          SERVER_PORT=8082
+          DB_HOST=localhost
+          DB_PORT=5435
+          DB_NAME=logisticsdb
+          DB_USER=postgres
+          DB_PASSWORD=postgres
+          KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+          CORS_ALLOWED_ORIGINS=http://localhost:5173
+          SHIPPING_DELAY_MS=100
+          DELIVERY_DELAY_MS=100
+          EOF
+
+      - name: Executar testes e gerar relatório de cobertura
+        run: mvn verify --batch-mode -Dmaven.test.failure.ignore=false
+
+      - name: Publicar resumo dos testes no GitHub
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Resultados dos Testes
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload — Relatório JaCoCo (cobertura)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-coverage-report
+          path: target/site/jacoco/
+          retention-days: 30
+
+      - name: Upload — Relatório Surefire (execução)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-test-report
+          path: target/site/surefire-report.html
+          retention-days: 30
