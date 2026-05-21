@@ -11,6 +11,11 @@ jobs:
     name: Unit Tests + JaCoCo Coverage
     runs-on: ubuntu-latest
 
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,6 +44,10 @@ jobs:
 
       - name: Executar testes e gerar relatório de cobertura
         run: mvn verify --batch-mode -Dmaven.test.failure.ignore=false
+
+      - name: Gerar relatório HTML do Surefire
+        if: always()
+        run: mvn surefire-report:report-only --batch-mode -DskipTests
 
       - name: Publicar resumo dos testes no GitHub
         uses: dorny/test-reporter@v1
